@@ -6,13 +6,13 @@ import (
   "github.com/gin-gonic/gin"
   "os"
   "strconv"
-  "sync"
+  //"sync"
   //"io"
   "io/ioutil"
   "log"
-  "regexp"
-  "strings"
-  "time"
+  //"regexp"
+  //"strings"
+  //"time"
 
   bolt "go.etcd.io/bbolt"
   "net/http"
@@ -25,6 +25,28 @@ func get(c *gin.Context) {
 }
 
 func set(c *gin.Context) {
+  path:=c.Param("path")
+  content,err:=ioutil.ReadAll(c.Request.Body)
+  if err != nil {
+    c.String(500, "Error reading request: "+err.Error())
+    return
+  }
+  ct := c.Request.Header.Get("content-type")
+  
+  err = db.Update(func(tx *bolt.Tx) error {
+    b := tx.Bucket([]byte("wclip"))
+    err := b.Put([]byte("content:"+path), content)
+    if err!=nil{return err}
+    err = b.Put([]byte("content-type:"+path), []byte(ct))
+    if err!=nil{return err}
+    return nil
+  })
+
+  if err != nil {
+    c.String(500, "Error saving: "+err.Error())
+    return
+  }
+  		c.String(http.StatusCreated, "Created")
 }
 
 func set_cors_headers(c *gin.Context) {
@@ -46,7 +68,7 @@ func main() {
 
   db_path := os.Getenv("DB_PATH")
   if db_path == "" {
-    db_path = "otpbase.db"
+    db_path = "wclip.db"
   }
   db, err = bolt.Open(db_path, 0600, nil)
   if err != nil {
@@ -55,9 +77,9 @@ func main() {
   defer db.Close()
 
   db.Update(func(tx *bolt.Tx) error {
-    b, err := tx.CreateBucketIfNotExists([]byte("apps"))
+    b, err := tx.CreateBucketIfNotExists([]byte("wclip"))
     if err != nil {
-      log.Fatal("Cannot create apps bucket")
+      log.Fatal("Cannot create wclip bucket")
     }
     b = b
     return nil
@@ -82,7 +104,7 @@ func main() {
   router.GET("/*path", get)
   router.POST("/*path", set)
   router.PUT("/*path", set)
-  router.GET("/robots.txt", robots_txt)
+  //router.GET("/robots.txt", robots_txt)
 
   // By default it serves on :8080 unless a
   // PORT environment variable was defined.
