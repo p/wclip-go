@@ -22,41 +22,45 @@ var http_user, http_password string
 var db *bolt.DB
 
 func get(c *gin.Context) {
-  path:=c.Param("path")
+  path := c.Param("path")
   var content []byte
   var ct string
 
   db.View(func(tx *bolt.Tx) error {
     b := tx.Bucket([]byte("wclip"))
-    content= b.Get([]byte("content:"+path))
-    ct=string(b.Get([]byte("content-type:"+path)))
+    content = b.Get([]byte("content:" + path))
+    ct = string(b.Get([]byte("content-type:" + path)))
     return nil
   })
-  
-  if content==nil{
+
+  if content == nil {
     c.String(404, "Not found")
     return
   }
 
-    c.Header("content-type",ct)
-    c.String(200, string(content[:]))
+  c.Header("content-type", ct)
+  c.String(200, string(content[:]))
 }
 
 func set(c *gin.Context) {
-  path:=c.Param("path")
-  content,err:=ioutil.ReadAll(c.Request.Body)
+  path := c.Param("path")
+  content, err := ioutil.ReadAll(c.Request.Body)
   if err != nil {
     c.String(500, "Error reading request: "+err.Error())
     return
   }
   ct := c.GetHeader("content-type")
-  
+
   err = db.Update(func(tx *bolt.Tx) error {
     b := tx.Bucket([]byte("wclip"))
     err := b.Put([]byte("content:"+path), content)
-    if err!=nil{return err}
+    if err != nil {
+      return err
+    }
     err = b.Put([]byte("content-type:"+path), []byte(ct))
-    if err!=nil{return err}
+    if err != nil {
+      return err
+    }
     return nil
   })
 
@@ -64,7 +68,7 @@ func set(c *gin.Context) {
     c.String(500, "Error saving: "+err.Error())
     return
   }
-  		c.String(http.StatusCreated, "Created")
+  c.String(http.StatusCreated, "Created")
 }
 
 func set_cors_headers(c *gin.Context) {
