@@ -22,6 +22,24 @@ var http_user, http_password string
 var db *bolt.DB
 
 func get(c *gin.Context) {
+  path:=c.Param("path")
+  var content []byte
+  var ct string
+
+  db.View(func(tx *bolt.Tx) error {
+    b := tx.Bucket([]byte("wclip"))
+    content= b.Get([]byte("content:"+path))
+    ct=string(b.Get([]byte("content-type:"+path)))
+    return nil
+  })
+  
+  if content==nil{
+    c.String(404, "Not found")
+    return
+  }
+
+    c.Header("content-type",ct)
+    c.String(200, string(content[:]))
 }
 
 func set(c *gin.Context) {
@@ -31,7 +49,7 @@ func set(c *gin.Context) {
     c.String(500, "Error reading request: "+err.Error())
     return
   }
-  ct := c.Request.Header.Get("content-type")
+  ct := c.GetHeader("content-type")
   
   err = db.Update(func(tx *bolt.Tx) error {
     b := tx.Bucket([]byte("wclip"))
