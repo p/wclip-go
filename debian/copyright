@@ -3,7 +3,8 @@ Upstream-Name: wclip
 Source: https://example.invalid/wclip-go
 
 Files: *
-Copyright: wclip authors
-License: MIT
- See the LICENSE file in the source tree for the full text of the MIT
- license.
+Copyright: 2020 Oleg Pudeyev
+License: BSD-2-Clause
+ See the LICENSE file in the source tree, or
+ /usr/share/common-licenses/BSD on Debian systems, for the full text
+ of the BSD 2-Clause license.

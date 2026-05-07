@@ -89,3 +89,8 @@ The service is enabled and started automatically on install.
 The package version is taken from the top entry of `debian/changelog`,
 which is also the single source of truth for the version baked into
 the binary (via `-ldflags -X main.version=...`).
+
+## License
+
+BSD 2-Clause. Copyright (c) 2020 Oleg Pudeyev. See [LICENSE](LICENSE)
+for the full text.
