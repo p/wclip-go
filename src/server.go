@@ -22,6 +22,11 @@ func (h *handler) get(c *gin.Context) {
   path := c.Param("path")
   content, ct, ok := h.store.Get(path)
   if !ok {
+    if path == "/robots.txt" {
+      c.Header("content-type", "text/plain")
+      c.String(http.StatusOK, "User-agent: *\nDisallow: /\n")
+      return
+    }
     c.String(404, "Not found")
     return
   }
