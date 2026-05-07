@@ -1,2 +1,11 @@
 wclip.db
 tmp
+.gocache
+.gomodcache
+debian/.debhelper/
+debian/files
+debian/wclip/
+debian/wclip.debhelper.log
+debian/wclip.postrm.debhelper
+debian/wclip.substvars
+debian/debhelper-build-stamp

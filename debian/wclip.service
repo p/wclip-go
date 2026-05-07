@@ -1,0 +1,34 @@
+[Unit]
+Description=wclip HTTP web-clipboard
+Documentation=file:///usr/share/doc/wclip/README.md
+After=network.target
+
+[Service]
+Type=simple
+User=wclip
+Group=wclip
+EnvironmentFile=-/etc/default/wclip
+WorkingDirectory=/var/lib/wclip
+ExecStart=/usr/bin/wclip
+Restart=on-failure
+RestartSec=2
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictRealtime=true
+SystemCallArchitectures=native
+ReadWritePaths=/var/lib/wclip
+
+[Install]
+WantedBy=multi-user.target

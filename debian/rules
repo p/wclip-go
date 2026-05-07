@@ -1,0 +1,25 @@
+#!/usr/bin/make -f
+
+export DH_VERBOSE = 1
+export GOTOOLCHAIN = local
+# Build inside the source tree to avoid GOPATH gymnastics.
+export GOFLAGS = -mod=mod
+export GOCACHE = $(CURDIR)/.gocache
+export GOMODCACHE = $(CURDIR)/.gomodcache
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	mkdir -p tmp
+	go build -trimpath -ldflags='-s -w' -o tmp/wclip ./src
+
+override_dh_auto_test:
+	go test ./src/...
+
+override_dh_auto_clean:
+	chmod -R u+w .gocache .gomodcache 2>/dev/null || true
+	rm -rf tmp .gocache .gomodcache
+
+override_dh_auto_install:
+	install -D -m 0755 tmp/wclip debian/wclip/usr/bin/wclip

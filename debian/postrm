@@ -1,0 +1,24 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    purge)
+        rm -rf /var/lib/wclip
+        if getent passwd wclip >/dev/null; then
+            deluser --system wclip || true
+        fi
+        if getent group wclip >/dev/null; then
+            delgroup --system wclip || true
+        fi
+        ;;
+    remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+        ;;
+    *)
+        echo "postrm called with unknown argument \`$1'" >&2
+        exit 1
+        ;;
+esac
+
+#DEBHELPER#
+
+exit 0

@@ -1,0 +1,6 @@
+/.debhelper/
+/files
+/wclip/
+/wclip.debhelper.log
+/wclip.substvars
+/debhelper-build-stamp

@@ -1,0 +1,16 @@
+wclip (0.2.0) unstable; urgency=medium
+
+  * Release 0.2.0.
+
+ -- wclip maintainers <root@localhost>  Wed, 07 May 2026 03:50:00 +0000
+
+wclip (0.1.0) unstable; urgency=medium
+
+  * Initial Debian packaging.
+  * In-memory and bbolt storage backends (STORE env var).
+  * Optional HTTP Basic Auth (HTTP_USER / HTTP_PASSWORD).
+  * CORS headers on all responses.
+  * /robots.txt fallback.
+  * Systemd unit running as the wclip system user.
+
+ -- wclip maintainers <root@localhost>  Wed, 07 May 2026 00:00:00 +0000

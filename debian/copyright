@@ -1,0 +1,9 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: wclip
+Source: https://example.invalid/wclip-go
+
+Files: *
+Copyright: wclip authors
+License: MIT
+ See the LICENSE file in the source tree for the full text of the MIT
+ license.

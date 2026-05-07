@@ -1,0 +1,18 @@
+# Configuration for wclip, sourced by the systemd unit.
+# Uncomment and edit as needed.
+
+# Storage backend: bolt (persistent) or mem (in-memory, volatile).
+#STORE=bolt
+
+# Path to the bbolt database file (only used when STORE=bolt).
+DB_PATH=/var/lib/wclip/wclip.db
+
+# TCP port to listen on.
+#PORT=8093
+
+# Set to any value to enable gin debug logging.
+#DEBUG=
+
+# HTTP Basic Auth. Both must be set together, or both unset.
+#HTTP_USER=
+#HTTP_PASSWORD=

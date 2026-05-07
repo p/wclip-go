@@ -1,0 +1,22 @@
+Source: wclip
+Section: web
+Priority: optional
+Maintainer: wclip maintainers <root@localhost>
+Build-Depends:
+ debhelper-compat (= 13),
+ golang-go (>= 2:1.21~),
+ make,
+Standards-Version: 4.6.2
+Rules-Requires-Root: no
+
+Package: wclip
+Architecture: any
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+ adduser,
+Description: Tiny HTTP web-clipboard server
+ wclip is a minimal HTTP service that lets clients PUT/POST a body to
+ any path and GET it back later with the same content-type. It supports
+ a persistent bbolt backend or an in-memory backend, optional HTTP Basic
+ Auth, and CORS for browser-based readers.
