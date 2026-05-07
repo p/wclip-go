@@ -1,5 +1,5 @@
 wclip.db
-tmp
+build
 .gocache
 .gomodcache
 debian/.debhelper/

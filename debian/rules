@@ -13,15 +13,15 @@ VERSION := $(shell dpkg-parsechangelog -SVersion)
 	dh $@
 
 override_dh_auto_build:
-	mkdir -p tmp
-	go build -trimpath -ldflags='-s -w -X main.version=$(VERSION)' -o tmp/wclip ./src
+	mkdir -p build
+	go build -trimpath -ldflags='-s -w -X main.version=$(VERSION)' -o build/wclip ./src
 
 override_dh_auto_test:
 	go test ./src/...
 
 override_dh_auto_clean:
 	chmod -R u+w .gocache .gomodcache 2>/dev/null || true
-	rm -rf tmp .gocache .gomodcache
+	rm -rf build .gocache .gomodcache
 
 override_dh_auto_install:
-	install -D -m 0755 tmp/wclip debian/wclip/usr/bin/wclip
+	install -D -m 0755 build/wclip debian/wclip/usr/bin/wclip

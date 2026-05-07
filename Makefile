@@ -6,8 +6,8 @@ LDFLAGS := -X main.version=$(VERSION)
 all: b
 
 b:
-	mkdir -p tmp
-	go build -ldflags='$(LDFLAGS)' -o tmp/wclip ./src
+	mkdir -p build
+	go build -ldflags='$(LDFLAGS)' -o build/wclip ./src
 
 test:
 	go test ./src/...
@@ -17,6 +17,6 @@ fmt:
 
 # https://blog.codeship.com/building-minimal-docker-containers-for-go-applications/
 docker:
-	mkdir -p tmp
-	CGO_ENABLED=0 GOOS=linux go build -ldflags='$(LDFLAGS)' -o tmp/wclip.docker ./src
+	mkdir -p build
+	CGO_ENABLED=0 GOOS=linux go build -ldflags='$(LDFLAGS)' -o build/wclip.docker ./src
 	docker build -t wclip-go .
