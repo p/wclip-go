@@ -92,5 +92,5 @@ the binary (via `-ldflags -X main.version=...`).
 
 ## License
 
-BSD 2-Clause. Copyright (c) 2020 Oleg Pudeyev. See [LICENSE](LICENSE)
+BSD 2-Clause. Copyright (c) 2020-2026 Oleg Pudeyev. See [LICENSE](LICENSE)
 for the full text.

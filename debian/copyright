@@ -3,7 +3,7 @@ Upstream-Name: wclip
 Source: https://example.invalid/wclip-go
 
 Files: *
-Copyright: 2020 Oleg Pudeyev
+Copyright: 2020-2026 Oleg Pudeyev
 License: BSD-2-Clause
  See the LICENSE file in the source tree, or
  /usr/share/common-licenses/BSD on Debian systems, for the full text
