@@ -7,12 +7,14 @@ export GOFLAGS = -mod=mod
 export GOCACHE = $(CURDIR)/.gocache
 export GOMODCACHE = $(CURDIR)/.gomodcache
 
+VERSION := $(shell dpkg-parsechangelog -SVersion)
+
 %:
 	dh $@
 
 override_dh_auto_build:
 	mkdir -p tmp
-	go build -trimpath -ldflags='-s -w' -o tmp/wclip ./src
+	go build -trimpath -ldflags='-s -w -X main.version=$(VERSION)' -o tmp/wclip ./src
 
 override_dh_auto_test:
 	go test ./src/...

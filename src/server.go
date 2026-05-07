@@ -12,6 +12,9 @@ import (
   "github.com/gin-gonic/gin"
 )
 
+// version is set via -ldflags "-X main.version=..." at build time.
+var version = "dev"
+
 var http_user, http_password string
 
 type handler struct {
@@ -56,6 +59,15 @@ func set_cors_headers(c *gin.Context) {
 }
 
 func main() {
+  if len(os.Args) > 1 {
+    switch os.Args[1] {
+    case "-v", "--version", "version":
+      fmt.Println(version)
+      return
+    }
+  }
+  log.Printf("wclip %s starting", version)
+
   http_user = os.Getenv("HTTP_USER")
   http_password = os.Getenv("HTTP_PASSWORD")
   if http_user == "" && http_password != "" {

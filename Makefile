@@ -1,10 +1,13 @@
 export GOTOOLCHAIN := local
 
+VERSION ?= $(shell awk 'NR==1{gsub(/[()]/,""); print $$2; exit}' debian/changelog 2>/dev/null || echo dev)
+LDFLAGS := -X main.version=$(VERSION)
+
 all: b
 
 b:
 	mkdir -p tmp
-	go build -o tmp/wclip ./src
+	go build -ldflags='$(LDFLAGS)' -o tmp/wclip ./src
 
 test:
 	go test ./src/...
@@ -15,5 +18,5 @@ fmt:
 # https://blog.codeship.com/building-minimal-docker-containers-for-go-applications/
 docker:
 	mkdir -p tmp
-	CGO_ENABLED=0 GOOS=linux go build -o tmp/wclip.docker ./src
+	CGO_ENABLED=0 GOOS=linux go build -ldflags='$(LDFLAGS)' -o tmp/wclip.docker ./src
 	docker build -t wclip-go .
