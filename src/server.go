@@ -1,48 +1,35 @@
 package main
 
 import (
-  //"errors"
   "fmt"
-  "github.com/gin-gonic/gin"
-  "os"
-  "strconv"
-  //"sync"
-  //"io"
   "io/ioutil"
   "log"
-  //"regexp"
-  //"strings"
-  //"time"
-
-  bolt "go.etcd.io/bbolt"
   "net/http"
+  "os"
+  "strconv"
+  "strings"
+
+  "github.com/gin-gonic/gin"
 )
 
 var http_user, http_password string
-var db *bolt.DB
 
-func get(c *gin.Context) {
+type handler struct {
+  store Store
+}
+
+func (h *handler) get(c *gin.Context) {
   path := c.Param("path")
-  var content []byte
-  var ct string
-
-  db.View(func(tx *bolt.Tx) error {
-    b := tx.Bucket([]byte("wclip"))
-    content = b.Get([]byte("content:" + path))
-    ct = string(b.Get([]byte("content-type:" + path)))
-    return nil
-  })
-
-  if content == nil {
+  content, ct, ok := h.store.Get(path)
+  if !ok {
     c.String(404, "Not found")
     return
   }
-
   c.Header("content-type", ct)
   c.String(200, string(content[:]))
 }
 
-func set(c *gin.Context) {
+func (h *handler) set(c *gin.Context) {
   path := c.Param("path")
   content, err := ioutil.ReadAll(c.Request.Body)
   if err != nil {
@@ -51,20 +38,7 @@ func set(c *gin.Context) {
   }
   ct := c.GetHeader("content-type")
 
-  err = db.Update(func(tx *bolt.Tx) error {
-    b := tx.Bucket([]byte("wclip"))
-    err := b.Put([]byte("content:"+path), content)
-    if err != nil {
-      return err
-    }
-    err = b.Put([]byte("content-type:"+path), []byte(ct))
-    if err != nil {
-      return err
-    }
-    return nil
-  })
-
-  if err != nil {
+  if err := h.store.Set(path, content, ct); err != nil {
     c.String(500, "Error saving: "+err.Error())
     return
   }
@@ -77,8 +51,6 @@ func set_cors_headers(c *gin.Context) {
 }
 
 func main() {
-  var err error
-
   http_user = os.Getenv("HTTP_USER")
   http_password = os.Getenv("HTTP_PASSWORD")
   if http_user == "" && http_password != "" {
@@ -88,50 +60,51 @@ func main() {
     log.Fatal("HTTP_USER was specified but HTTP_PASSWORD was not, they need to be given together")
   }
 
-  db_path := os.Getenv("DB_PATH")
-  if db_path == "" {
-    db_path = "wclip.db"
+  var store Store
+  backend := strings.ToLower(os.Getenv("STORE"))
+  if backend == "" {
+    backend = "bolt"
   }
-  db, err = bolt.Open(db_path, 0600, nil)
-  if err != nil {
-    log.Fatal("Error opening database")
-  }
-  defer db.Close()
-
-  db.Update(func(tx *bolt.Tx) error {
-    b, err := tx.CreateBucketIfNotExists([]byte("wclip"))
-    if err != nil {
-      log.Fatal("Cannot create wclip bucket")
+  switch backend {
+  case "mem", "memory":
+    store = NewMemStore()
+    log.Printf("using in-memory store")
+  case "bolt":
+    db_path := os.Getenv("DB_PATH")
+    if db_path == "" {
+      db_path = "wclip.db"
     }
-    b = b
-    return nil
-  })
+    bs, err := NewBoltStore(db_path)
+    if err != nil {
+      log.Fatalf("Error opening database: %v", err)
+    }
+    store = bs
+    log.Printf("using bolt store at %s", db_path)
+  default:
+    log.Fatalf("unknown STORE backend: %q (expected 'bolt' or 'mem')", backend)
+  }
+  defer store.Close()
 
-  // Disable Console Color
-  // gin.DisableConsoleColor()
+  h := &handler{store: store}
 
   debug := os.Getenv("DEBUG")
   if debug == "" {
     gin.SetMode(gin.ReleaseMode)
   }
 
-  // Creates a gin router with default middleware:
-  // logger and recovery (crash-free) middleware
   router := gin.Default()
 
-  //router.LoadHTMLGlob("views/*.html")
+  if http_user != "" {
+    router.Use(gin.BasicAuth(gin.Accounts{http_user: http_password}))
+  }
 
-  //router.Use(gin.Recovery())
+  router.GET("/*path", h.get)
+  router.POST("/*path", h.set)
+  router.PUT("/*path", h.set)
 
-  router.GET("/*path", get)
-  router.POST("/*path", set)
-  router.PUT("/*path", set)
-  //router.GET("/robots.txt", robots_txt)
-
-  // By default it serves on :8080 unless a
-  // PORT environment variable was defined.
   port := os.Getenv("PORT")
   var iport int
+  var err error
   if port == "" {
     iport = 8093
   } else {
@@ -141,5 +114,4 @@ func main() {
     }
   }
   router.Run(fmt.Sprintf(":%d", iport))
-  // router.Run(":3000") for a hard coded port
 }
