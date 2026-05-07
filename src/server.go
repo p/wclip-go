@@ -90,22 +90,12 @@ func main() {
   }
   defer store.Close()
 
-  h := &handler{store: store}
-
   debug := os.Getenv("DEBUG")
   if debug == "" {
     gin.SetMode(gin.ReleaseMode)
   }
 
-  router := gin.Default()
-
-  if http_user != "" {
-    router.Use(gin.BasicAuth(gin.Accounts{http_user: http_password}))
-  }
-
-  router.GET("/*path", h.get)
-  router.POST("/*path", h.set)
-  router.PUT("/*path", h.set)
+  router := newRouter(store, http_user, http_password)
 
   port := os.Getenv("PORT")
   var iport int
@@ -119,4 +109,17 @@ func main() {
     }
   }
   router.Run(fmt.Sprintf(":%d", iport))
+}
+
+func newRouter(store Store, user, pass string) *gin.Engine {
+  h := &handler{store: store}
+  router := gin.New()
+  router.Use(gin.Recovery())
+  if user != "" {
+    router.Use(gin.BasicAuth(gin.Accounts{user: pass}))
+  }
+  router.GET("/*path", h.get)
+  router.POST("/*path", h.set)
+  router.PUT("/*path", h.set)
+  return router
 }

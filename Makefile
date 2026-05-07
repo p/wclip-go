@@ -4,6 +4,9 @@ b:
 	mkdir -p tmp
 	go build -o tmp/wclip ./src
 
+test:
+	go test ./src/...
+
 fmt:
 	for f in src/*.go; do go fmt $$f && sed -i -e 's/	/  /g' $$f; done
 
