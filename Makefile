@@ -1,3 +1,5 @@
+export GOTOOLCHAIN := local
+
 all: b
 
 b:
