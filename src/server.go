@@ -115,6 +115,7 @@ func newRouter(store Store, user, pass string) *gin.Engine {
   h := &handler{store: store}
   router := gin.New()
   router.Use(gin.Recovery())
+  router.Use(set_cors_headers)
   if user != "" {
     router.Use(gin.BasicAuth(gin.Accounts{user: pass}))
   }

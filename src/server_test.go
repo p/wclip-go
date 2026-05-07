@@ -181,6 +181,17 @@ func TestAuth_AppliesToWrites(t *testing.T) {
   }
 }
 
+func TestCORS_HeadersPresent(t *testing.T) {
+  r := newRouter(NewMemStore(), "", "")
+  w := do(t, r, "GET", "/anything", "", "", "")
+  if got := w.Header().Get("Access-Control-Allow-Origin"); got != "*" {
+    t.Fatalf("Allow-Origin = %q", got)
+  }
+  if got := w.Header().Get("Access-Control-Allow-Methods"); got != "GET" {
+    t.Fatalf("Allow-Methods = %q", got)
+  }
+}
+
 func TestHandler_WithBoltStore(t *testing.T) {
   // Sanity: handlers work with bolt backend too, not just mem.
   s, _ := newTestBoltStore(t)

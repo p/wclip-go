@@ -36,6 +36,10 @@ All configuration is via environment variables.
 Setting only one of `HTTP_USER` / `HTTP_PASSWORD` is a startup error.
 With neither set, the server is open (no auth).
 
+Responses include `Access-Control-Allow-Origin: *` and
+`Access-Control-Allow-Methods: GET`, so browser-based clients on other
+origins can read clips but cannot write them via cross-origin requests.
+
 Basic Auth is sent in cleartext — put the server behind a TLS-terminating
 reverse proxy if you care.
 
