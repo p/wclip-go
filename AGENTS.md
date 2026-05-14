@@ -48,6 +48,16 @@ lives. It is consumed by:
 `var version = "dev"` in `server.go` is the fallback when built without
 ldflags. **To bump the version, edit `debian/changelog` only.**
 
+**Release commits stand alone.** Never bundle a `debian/changelog`
+version bump with any other change. A release commit edits *only*
+`debian/changelog` (a new top entry summarizing what shipped since
+the last release) and touches nothing else. Equally: **never cut a
+release as part of doing other work.** Releases are an explicit,
+separate decision made by a human — if you've just finished a feature
+or fix, stop at the feature/fix commit and let the user decide when
+(and whether) to release. Don't preemptively add a changelog entry
+"to go with" the change.
+
 ## Configuration
 
 Env vars only. No CLI flags except `-v` / `--version` / `version`.
