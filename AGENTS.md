@@ -36,27 +36,85 @@ backend (bbolt or in-memory).
 `gofmt` alone — your diff will fight the convention. Match the existing
 style in any new `.go` file.
 
-## Versioning (single source of truth)
+## Versioning
 
-The top entry of `debian/changelog` is the only place the version
-lives. It is consumed by:
+**Canonical source of truth: git tags** of the form `vMAJOR.MINOR.PATCH`
+(e.g. `v0.2.1`). The leading `v` is the Go-modules / semver
+convention and lets `go install wclip@vX.Y.Z` work if anyone ever
+consumes wclip as a module.
 
-- `Makefile` — `awk` extracts it, passed as `-ldflags '-X main.version=$(VERSION)'`.
-- `debian/rules` — `dpkg-parsechangelog -SVersion` does the same for the
-  packaged binary, and also sets the `.deb` version.
+`debian/changelog`'s top entry **must match the tag without the `v`**
+(e.g. tag `v0.3.0` ↔ changelog `wclip (0.3.0) ...`). This is
+required because `debian/rules` uses `dpkg-parsechangelog -SVersion`
+as the `.deb`'s package version, and we want the `.deb` and the
+tagged Go binary to agree.
 
-`var version = "dev"` in `server.go` is the fallback when built without
-ldflags. **To bump the version, edit `debian/changelog` only.**
+### How the version is resolved into the binary
 
-**Release commits stand alone.** Never bundle a `debian/changelog`
-version bump with any other change. A release commit edits *only*
-`debian/changelog` (a new top entry summarizing what shipped since
-the last release) and touches nothing else. Equally: **never cut a
-release as part of doing other work.** Releases are an explicit,
+At build time, the `Makefile` derives `VERSION` with a four-step
+fallback chain (highest priority first):
+
+1. `git describe --tags --dirty` (strip leading `v`) — used in any
+   clone with at least one tag. On the tagged commit returns the
+   bare version (e.g. `0.2.1`); between tags returns
+   `0.2.1-7-g30ea4f7`; with uncommitted changes appends `-dirty`.
+2. `dpkg-parsechangelog -SVersion` — used in Debian source trees
+   without git context.
+3. `awk` on `debian/changelog` — used in tarballs without `dpkg-dev`.
+4. Literal `"dev"` — last-ditch fallback.
+
+`COMMIT` (short SHA) and `DATE` (committer time, not build time —
+keeps builds reproducible) come from git. All three are passed via
+`-ldflags '-X main.version=... -X main.commit=... -X main.date=...'`.
+
+`debian/rules` continues to use `dpkg-parsechangelog -SVersion` as
+authoritative for the `.deb` version and passes the same value into
+the binary via ldflags, so deb-packaged and source-built binaries
+agree.
+
+### Runtime fallback (no ldflags)
+
+If any of `main.version`, `main.commit`, `main.date` are unset
+(e.g. a contributor ran `go build ./src` directly), `src/version.go`
+falls back to `runtime/debug.ReadBuildInfo()`:
+
+- `bi.Main.Version` (set by `go install pkg@vX.Y.Z`) fills `version`
+  when it's still `"dev"`.
+- `vcs.revision` / `vcs.time` / `vcs.modified` from the embedded VCS
+  settings fill `commit`, `date`, and the dirty marker.
+
+This means a plain `go build` still produces a binary that knows its
+commit and dirty status. Don't bypass this by hardcoding values
+elsewhere.
+
+### Release workflow
+
+A release is **two commits and one tag**, all on master, in order:
+
+1. **changelog commit** — adds a new top entry to `debian/changelog`
+   with version `X.Y.Z`. **Touches only `debian/changelog`.**
+2. **`git tag -a vX.Y.Z -m "Release vX.Y.Z"`** — annotated tag on
+   the changelog commit. The tag (sans `v`) must equal the changelog
+   version exactly.
+3. (Optional, future) push tag to forge; goreleaser or hand-built
+   artifacts can key off the tag.
+
+**Release commits and tags stand alone.** Never bundle a
+`debian/changelog` version bump with any other change, and never cut
+a release as part of doing other work. Releases are an explicit,
 separate decision made by a human — if you've just finished a feature
 or fix, stop at the feature/fix commit and let the user decide when
 (and whether) to release. Don't preemptively add a changelog entry
 "to go with" the change.
+
+### Retroactive tags
+
+The pre-existing release commits were tagged retroactively: `v0.2.0`
+on `8136f21` and `v0.2.1` on `2a55c7e`. The `0.1.0` changelog entry
+represents an initial-packaging state without its own dedicated
+release commit and is intentionally not tagged. When tagging a new
+release, just follow the workflow above; no further retroactive work
+is needed.
 
 ## Configuration
 
