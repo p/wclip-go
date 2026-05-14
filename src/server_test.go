@@ -208,6 +208,42 @@ func TestHandler_WithBoltStore(t *testing.T) {
   }
 }
 
+func TestParseBindList(t *testing.T) {
+  eq := func(a, b []string) bool {
+    if len(a) != len(b) {
+      return false
+    }
+    for i := range a {
+      if a[i] != b[i] {
+        return false
+      }
+    }
+    return true
+  }
+  cases := []struct {
+    in   string
+    want []string
+  }{
+    {"", []string{""}},                                    // default: all interfaces
+    {" ", []string{""}},                                   // whitespace-only = default
+    {"127.0.0.1", []string{"127.0.0.1"}},                  // single
+    {"[::1]", []string{"[::1]"}},                          // IPv6 literal
+    {"127.0.0.1,[::1]", []string{"127.0.0.1", "[::1]"}},   // both loopbacks
+    {"127.0.0.1, [::1] ", []string{"127.0.0.1", "[::1]"}}, // whitespace tolerant
+    {"127.0.0.1,127.0.0.1", []string{"127.0.0.1"}},        // dedupe
+    {"127.0.0.1,,[::1]", []string{"127.0.0.1", "[::1]"}},  // drop empties
+    {",", nil},                                            // explicit-but-empty = error
+    {", ,", nil},                                          // same
+  }
+  for _, c := range cases {
+    got := parseBindList(c.in)
+    if !eq(got, c.want) {
+      t.Errorf("parseBindList(%q) = %v (len %d), want %v (len %d)",
+        c.in, got, len(got), c.want, len(c.want))
+    }
+  }
+}
+
 func TestListenAddr(t *testing.T) {
   cases := []struct {
     bind string

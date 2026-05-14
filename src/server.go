@@ -4,6 +4,7 @@ import (
   "fmt"
   "io/ioutil"
   "log"
+  "net"
   "net/http"
   "os"
   "strconv"
@@ -120,18 +121,72 @@ func main() {
       log.Fatal(err)
     }
   }
-  bind := os.Getenv("BIND")
-  addr := listenAddr(bind, iport)
-  log.Printf("listening on %s", addr)
-  router.Run(addr)
+  binds := parseBindList(os.Getenv("BIND"))
+  if binds == nil {
+    log.Fatalf("BIND=%q yielded no listen addresses", os.Getenv("BIND"))
+  }
+
+  // Pre-create all listeners up front so a conflict on any address
+  // fails the process before we start serving on the others.
+  var lns []net.Listener
+  for _, b := range binds {
+    addr := listenAddr(b, iport)
+    ln, err := net.Listen("tcp", addr)
+    if err != nil {
+      for _, l := range lns {
+        l.Close()
+      }
+      log.Fatalf("listen on %s: %v", addr, err)
+    }
+    log.Printf("listening on %s", ln.Addr())
+    lns = append(lns, ln)
+  }
+
+  // Share one http.Server across all listeners; first listener error
+  // terminates the process.
+  srv := &http.Server{Handler: router}
+  errCh := make(chan error, len(lns))
+  for _, ln := range lns {
+    ln := ln
+    go func() { errCh <- srv.Serve(ln) }()
+  }
+  log.Fatal(<-errCh)
 }
 
-// listenAddr builds the address string passed to gin/net.Listen.
+// listenAddr builds a single address string passed to net.Listen.
 // An empty bind preserves the historical behavior of listening on all
 // interfaces (":<port>"). IPv6 literals must be bracketed by the caller,
 // e.g. BIND="[::1]".
 func listenAddr(bind string, port int) string {
   return fmt.Sprintf("%s:%d", bind, port)
+}
+
+// parseBindList parses a comma-separated BIND value into a deduped list
+// of listen addresses (each suitable as the bind argument to
+// listenAddr).
+//
+// A literally empty/whitespace-only input returns [""] (one entry,
+// preserving the historical default of listening on all interfaces).
+// Otherwise the input is split on commas, each entry is trimmed, empty
+// entries are dropped, and duplicates are removed (preserving order).
+// If the input is non-empty but yields no usable entries (e.g. "," or
+// ", ,"), parseBindList returns nil and the caller should treat that
+// as a configuration error.
+func parseBindList(s string) []string {
+  if strings.TrimSpace(s) == "" {
+    return []string{""}
+  }
+  seen := map[string]bool{}
+  var out []string
+  for _, p := range strings.Split(s, ",") {
+    p = strings.TrimSpace(p)
+    if p == "" || seen[p] {
+      continue
+    }
+    seen[p] = true
+    out = append(out, p)
+  }
+  return out
 }
 
 func newRouter(store Store, user, pass string) *gin.Engine {

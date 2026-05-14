@@ -7,11 +7,13 @@
 # Path to the bbolt database file (only used when STORE=bolt).
 DB_PATH=/var/lib/wclip/wclip.db
 
-# Address to bind to (listen on). Unset = listen on all interfaces
-# (0.0.0.0 and [::]). IPv6 literals must be bracketed.
+# Address(es) to bind to (listen on). Unset = listen on all interfaces
+# (0.0.0.0 and [::]). Comma-separated for multiple listeners; all share
+# the same PORT. IPv6 literals must be bracketed.
 # Examples:
-#   BIND=127.0.0.1      # IPv4 loopback only
-#   BIND=[::1]          # IPv6 loopback only
+#   BIND=127.0.0.1         # IPv4 loopback only
+#   BIND=[::1]             # IPv6 loopback only
+#   BIND=127.0.0.1,[::1]   # both loopbacks, nothing external
 #BIND=
 
 # TCP port to listen on. The server listens on BIND:PORT.

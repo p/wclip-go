@@ -66,7 +66,7 @@ Env vars only. No CLI flags except `-v` / `--version` / `version`.
 |---|---|---|
 | `STORE` | `bolt` | `bolt` or `mem` (also accepts `memory`). |
 | `DB_PATH` | `wclip.db` | bolt only. |
-| `BIND` | unset | Listen address. Empty → all interfaces (`:PORT`). IPv6 literals must be bracketed (`[::1]`). Combined with `PORT` as `BIND:PORT`. |
+| `BIND` | unset | Listen address(es). Empty → all interfaces (`:PORT`). Comma-separated for multiple listeners sharing one `PORT` (e.g. `127.0.0.1,[::1]`). IPv6 literals must be bracketed. Combined with `PORT` as `BIND:PORT` per entry. |
 | `PORT` | `8093` | |
 | `DEBUG` | unset | Any value → gin debug mode. |
 | `HTTP_USER` / `HTTP_PASSWORD` | unset | Must be set together; setting only one is a fatal startup error. |
@@ -86,6 +86,13 @@ When adding a new env var: document it in `README.md` **and**
 - **`newRouter(store, user, pass)`** is the factory used by both
   `main` and tests. Keep it pure — don't read env vars or touch globals
   inside it; do that in `main` and pass values in.
+- **Multi-listener startup.** `main` may open more than one
+  `net.Listener` (when `BIND` is a comma-separated list) and run a
+  `srv.Serve(ln)` goroutine per listener, all sharing one
+  `http.Server` and the gin router. All listeners are pre-opened
+  before any goroutine starts, so an `EADDRINUSE` on any address
+  fails the whole process cleanly. The first listener that errors
+  terminates the process via `log.Fatal`.
 - **Routes.** Single wildcard `/*path` for `GET`, `POST`, `PUT`.
   - `GET /robots.txt` returns a disallow-all body **only** when nothing
     is stored at that path; a user-`PUT` value wins.

@@ -41,7 +41,7 @@ All configuration is via environment variables.
 |-----------------|------------|---------------------------------------------------------------------------------|
 | `STORE`         | `bolt`     | Storage backend: `bolt` (persistent, on-disk) or `mem` (in-memory, volatile).   |
 | `DB_PATH`       | `wclip.db` | Path to the bbolt database file. Only used when `STORE=bolt`.                   |
-| `BIND`          | unset      | Address to bind to / listen on. Unset (the default) listens on all interfaces (`0.0.0.0` and `[::]`). Use `127.0.0.1` for IPv4 loopback or `[::1]` for IPv6 loopback. IPv6 literals must be bracketed. |
+| `BIND`          | unset      | Address(es) to bind to / listen on. Unset (the default) listens on all interfaces (`0.0.0.0` and `[::]`). Use `127.0.0.1` for IPv4 loopback or `[::1]` for IPv6 loopback. May be a comma-separated list to listen on multiple addresses, e.g. `BIND=127.0.0.1,[::1]` for both loopbacks only. All listeners share the same `PORT`. IPv6 literals must be bracketed. |
 | `PORT`          | `8093`     | TCP port to listen on. The server listens on `BIND:PORT`.                       |
 | `DEBUG`         | unset      | If set to any value, gin runs in debug mode (verbose logs).                     |
 | `HTTP_USER`     | unset      | If set (together with `HTTP_PASSWORD`), enables HTTP Basic Auth on all routes.  |
