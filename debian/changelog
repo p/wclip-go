@@ -1,3 +1,24 @@
+wclip (0.3.0) unstable; urgency=medium
+
+  * Add BIND env var to control the listen address. Comma-separated
+    values produce multiple listeners sharing one PORT.
+  * Default bind changed: with BIND unset, wclip now listens only on
+    available loopback addresses (127.0.0.1 and [::1]) instead of all
+    interfaces. Set BIND=* (or an explicit list) to expose externally.
+    The shipped Docker image pins BIND=* so 'docker run -p ...' keeps
+    working without per-deployment overrides.
+  * Service is no longer enabled or started automatically on package
+    install. After install, run: sudo systemctl enable --now wclip.
+    Upgrades preserve whatever state the operator has set.
+  * Richer --version output: version, commit, build date, Go version,
+    os/arch. A plain 'go build' now uses runtime/debug.ReadBuildInfo()
+    to fill in commit and dirty status when ldflags are absent.
+  * Versioning is now driven by git tags (vX.Y.Z); the debian/changelog
+    top entry must match the tag without the 'v'.
+  * Maintainer field corrected (no behavior change).
+
+ -- Oleg Pudeyev <code@olegp.name>  Thu, 14 May 2026 09:55:33 -0400
+
 wclip (0.2.1) unstable; urgency=medium
 
   * README updates; correct license metadata (BSD-2-Clause).
