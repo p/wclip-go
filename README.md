@@ -41,7 +41,7 @@ All configuration is via environment variables.
 |-----------------|------------|---------------------------------------------------------------------------------|
 | `STORE`         | `bolt`     | Storage backend: `bolt` (persistent, on-disk) or `mem` (in-memory, volatile).   |
 | `DB_PATH`       | `wclip.db` | Path to the bbolt database file. Only used when `STORE=bolt`.                   |
-| `BIND`          | unset      | Address(es) to bind to / listen on. Unset (the default) listens on all interfaces (`0.0.0.0` and `[::]`). Use `127.0.0.1` for IPv4 loopback or `[::1]` for IPv6 loopback. May be a comma-separated list to listen on multiple addresses, e.g. `BIND=127.0.0.1,[::1]` for both loopbacks only. All listeners share the same `PORT`. IPv6 literals must be bracketed. |
+| `BIND`          | unset      | Address(es) to bind to / listen on. The default (unset) listens on **all available loopback addresses** — `127.0.0.1` and, if available, `[::1]`. To expose the server beyond loopback, set `BIND` explicitly: `BIND=*` (or `BIND=0.0.0.0,[::]`) listens on all interfaces; a comma-separated list like `BIND=127.0.0.1,10.0.0.5` binds those specific addresses. IPv6 literals must be bracketed. All listeners share the same `PORT`. When using `*` from a shell, quote it (`BIND='*'`) to suppress glob expansion. |
 | `PORT`          | `8093`     | TCP port to listen on. The server listens on `BIND:PORT`.                       |
 | `DEBUG`         | unset      | If set to any value, gin runs in debug mode (verbose logs).                     |
 | `HTTP_USER`     | unset      | If set (together with `HTTP_PASSWORD`), enables HTTP Basic Auth on all routes.  |
@@ -49,6 +49,26 @@ All configuration is via environment variables.
 
 Setting only one of `HTTP_USER` / `HTTP_PASSWORD` is a startup error.
 With neither set, the server is open (no auth).
+
+**Default bind changed:** previous versions listened on all interfaces
+by default. The default is now loopback-only. If you reach wclip from
+another host (LAN, separate-host reverse proxy, etc.), set `BIND=*`
+(or an explicit list of addresses) to restore the previous behavior.
+The shipped Docker image sets `BIND=*` so `docker run -p ...` keeps
+working; the Debian package leaves it unset so a default install is
+loopback-only until you edit `/etc/default/wclip`.
+
+### Bind failure semantics
+
+- **Default (`BIND` unset).** Best-effort: tries `127.0.0.1` and
+  `[::1]`, skips any that fail to bind (e.g. `[::1]` in containers
+  without IPv6) with a log message, fails only if **all** loopback
+  binds fail.
+- **Explicit `BIND`.** Strict: every listed address must bind
+  successfully; the first failure aborts startup.
+- An explicit but empty value such as `BIND=,` is a configuration
+  error.
+
 
 Basic Auth is sent in cleartext — put the server behind a
 TLS-terminating reverse proxy if you care.

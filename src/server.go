@@ -121,18 +121,36 @@ func main() {
       log.Fatal(err)
     }
   }
-  binds := parseBindList(os.Getenv("BIND"))
-  if binds == nil {
-    log.Fatalf("BIND=%q yielded no listen addresses", os.Getenv("BIND"))
+  bindEnv := os.Getenv("BIND")
+  var (
+    binds      []string
+    bestEffort bool
+  )
+  if strings.TrimSpace(bindEnv) == "" {
+    // Default: listen on all available loopback addresses. IPv6
+    // loopback may be absent (e.g. some containers) — skip it with a
+    // log message rather than refusing to start.
+    binds = defaultBinds()
+    bestEffort = true
+  } else {
+    binds = parseBindList(bindEnv)
+    if len(binds) == 0 {
+      log.Fatalf("BIND=%q yielded no listen addresses", bindEnv)
+    }
   }
 
-  // Pre-create all listeners up front so a conflict on any address
-  // fails the process before we start serving on the others.
+  // Pre-create listeners up front. Explicit BIND is strict: any
+  // failure aborts. The default (loopback) mode is best-effort: skip
+  // an address that fails to bind as long as at least one succeeds.
   var lns []net.Listener
   for _, b := range binds {
     addr := listenAddr(b, iport)
     ln, err := net.Listen("tcp", addr)
     if err != nil {
+      if bestEffort {
+        log.Printf("skipping %s: %v", addr, err)
+        continue
+      }
       for _, l := range lns {
         l.Close()
       }
@@ -140,6 +158,9 @@ func main() {
     }
     log.Printf("listening on %s", ln.Addr())
     lns = append(lns, ln)
+  }
+  if len(lns) == 0 {
+    log.Fatalf("no listeners could be opened (tried %v)", binds)
   }
 
   // Share one http.Server across all listeners; first listener error
@@ -161,26 +182,40 @@ func listenAddr(bind string, port int) string {
   return fmt.Sprintf("%s:%d", bind, port)
 }
 
-// parseBindList parses a comma-separated BIND value into a deduped list
-// of listen addresses (each suitable as the bind argument to
-// listenAddr).
+// defaultBinds is the list of addresses tried when BIND is unset:
+// IPv4 + IPv6 loopback. Binding is best-effort — an address that
+// fails (e.g. [::1] in a container without IPv6) is skipped, and the
+// server starts as long as at least one succeeds.
+func defaultBinds() []string {
+  return []string{"127.0.0.1", "[::1]"}
+}
+
+// parseBindList parses a comma-separated BIND value into a deduped
+// list of listen addresses (each suitable as the bind argument to
+// listenAddr). The token "*" is the wildcard alias for "all
+// interfaces" and expands to "" (net.Listen on ":<port>", dual-stack
+// on platforms that support it).
 //
-// A literally empty/whitespace-only input returns [""] (one entry,
-// preserving the historical default of listening on all interfaces).
-// Otherwise the input is split on commas, each entry is trimmed, empty
-// entries are dropped, and duplicates are removed (preserving order).
-// If the input is non-empty but yields no usable entries (e.g. "," or
-// ", ,"), parseBindList returns nil and the caller should treat that
-// as a configuration error.
+// Input is split on commas, each entry is trimmed, empty entries are
+// dropped, and duplicates are removed (preserving order). An
+// empty/whitespace-only input, or one yielding no usable entries
+// (e.g. "," or ", ,"), returns nil; the caller decides whether that
+// is the "no BIND set" default case or a configuration error.
 func parseBindList(s string) []string {
   if strings.TrimSpace(s) == "" {
-    return []string{""}
+    return nil
   }
   seen := map[string]bool{}
   var out []string
   for _, p := range strings.Split(s, ",") {
     p = strings.TrimSpace(p)
-    if p == "" || seen[p] {
+    if p == "" {
+      continue
+    }
+    if p == "*" {
+      p = "" // wildcard alias → all interfaces
+    }
+    if seen[p] {
       continue
     }
     seen[p] = true

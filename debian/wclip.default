@@ -7,13 +7,21 @@
 # Path to the bbolt database file (only used when STORE=bolt).
 DB_PATH=/var/lib/wclip/wclip.db
 
-# Address(es) to bind to (listen on). Unset = listen on all interfaces
-# (0.0.0.0 and [::]). Comma-separated for multiple listeners; all share
-# the same PORT. IPv6 literals must be bracketed.
+# Address(es) to bind to (listen on).
+#
+# Default (BIND unset): listen on all available loopback addresses
+# (127.0.0.1 and, if available, [::1]). Best-effort: an unavailable
+# loopback is skipped with a log message rather than refusing to start.
+#
+# To expose wclip beyond loopback, set BIND explicitly. Comma-separated
+# values produce multiple listeners sharing the same PORT. IPv6
+# literals must be bracketed.
+#
 # Examples:
+#   BIND=*                 # all interfaces (the pre-loopback-default behavior)
+#   BIND=0.0.0.0           # all IPv4 interfaces
 #   BIND=127.0.0.1         # IPv4 loopback only
-#   BIND=[::1]             # IPv6 loopback only
-#   BIND=127.0.0.1,[::1]   # both loopbacks, nothing external
+#   BIND=127.0.0.1,10.0.0.5  # loopback + one LAN address
 #BIND=
 
 # TCP port to listen on. The server listens on BIND:PORT.

@@ -224,16 +224,19 @@ func TestParseBindList(t *testing.T) {
     in   string
     want []string
   }{
-    {"", []string{""}},                                    // default: all interfaces
-    {" ", []string{""}},                                   // whitespace-only = default
+    {"", nil},                                             // unset → caller uses defaults
+    {" ", nil},                                            // whitespace-only → same
     {"127.0.0.1", []string{"127.0.0.1"}},                  // single
     {"[::1]", []string{"[::1]"}},                          // IPv6 literal
     {"127.0.0.1,[::1]", []string{"127.0.0.1", "[::1]"}},   // both loopbacks
     {"127.0.0.1, [::1] ", []string{"127.0.0.1", "[::1]"}}, // whitespace tolerant
     {"127.0.0.1,127.0.0.1", []string{"127.0.0.1"}},        // dedupe
     {"127.0.0.1,,[::1]", []string{"127.0.0.1", "[::1]"}},  // drop empties
-    {",", nil},                                            // explicit-but-empty = error
+    {",", nil},                                            // explicit-but-empty (caller treats as error)
     {", ,", nil},                                          // same
+    {"*", []string{""}},                                   // wildcard alias → all interfaces
+    {"*,127.0.0.1", []string{"", "127.0.0.1"}},            // wildcard + extra
+    {"*,*", []string{""}},                                 // dedupe wildcard
   }
   for _, c := range cases {
     got := parseBindList(c.in)
@@ -260,6 +263,19 @@ func TestListenAddr(t *testing.T) {
     got := listenAddr(c.bind, c.port)
     if got != c.want {
       t.Errorf("listenAddr(%q, %d) = %q, want %q", c.bind, c.port, got, c.want)
+    }
+  }
+}
+
+func TestDefaultBinds(t *testing.T) {
+  got := defaultBinds()
+  want := []string{"127.0.0.1", "[::1]"}
+  if len(got) != len(want) {
+    t.Fatalf("defaultBinds() = %v, want %v", got, want)
+  }
+  for i := range got {
+    if got[i] != want[i] {
+      t.Errorf("defaultBinds()[%d] = %q, want %q", i, got[i], want[i])
     }
   }
 }
