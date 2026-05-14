@@ -13,8 +13,8 @@ import (
   "github.com/gin-gonic/gin"
 )
 
-// version is set via -ldflags "-X main.version=..." at build time.
-var version = "dev"
+// version, commit, and date live in version.go; they are set via
+// -ldflags at build time and fall back to runtime/debug.ReadBuildInfo().
 
 var http_user, http_password string
 
@@ -63,11 +63,11 @@ func main() {
   if len(os.Args) > 1 {
     switch os.Args[1] {
     case "-v", "--version", "version":
-      fmt.Println(version)
+      fmt.Println(versionString())
       return
     }
   }
-  log.Printf("wclip %s starting", version)
+  log.Printf("wclip %s starting", shortVersion())
 
   http_user = os.Getenv("HTTP_USER")
   http_password = os.Getenv("HTTP_PASSWORD")
