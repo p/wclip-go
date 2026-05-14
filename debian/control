@@ -1,7 +1,7 @@
 Source: wclip
 Section: web
 Priority: optional
-Maintainer: wclip maintainers <root@localhost>
+Maintainer: Oleg Pudeyev <code@olegp.name>
 Build-Depends:
  debhelper-compat (= 13),
  golang-go (>= 2:1.21~),
