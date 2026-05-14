@@ -25,3 +25,11 @@ override_dh_auto_clean:
 
 override_dh_auto_install:
 	install -D -m 0755 build/wclip debian/wclip/usr/bin/wclip
+
+# Install the systemd unit but do not enable or start it on fresh
+# install. The operator must explicitly opt in via
+#   sudo systemctl enable --now wclip
+# Upgrade behavior is unchanged: if a user has already enabled and
+# started the service, dh_installsystemd will still restart it.
+override_dh_installsystemd:
+	dh_installsystemd --no-enable --no-start

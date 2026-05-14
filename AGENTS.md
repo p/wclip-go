@@ -197,6 +197,16 @@ When adding a new env var: document it in `README.md` **and**
     (`debian/wclip.dirs` + `postinst`).
 - `debian/rules` overrides `dh_auto_build/test/clean/install`, uses
   in-tree `.gocache` / `.gomodcache` (both gitignored).
+- **Service is not enabled or started on install.**
+  `debian/rules` overrides `dh_installsystemd` with
+  `--no-enable --no-start`, so a fresh `dpkg -i` / `apt install`
+  installs the unit dormant. The operator opts in with
+  `systemctl enable --now wclip`. Upgrade behavior is unchanged — a
+  service the user has already enabled+started is restarted normally
+  on upgrade. Rationale: lets the operator edit
+  `/etc/default/wclip` (BIND, HTTP_USER/HTTP_PASSWORD, etc.) before
+  the service first runs, and avoids surprising the user with an
+  open listener they didn't ask for.
 - **If you add a runtime-writable path, also add it to
   `ReadWritePaths=` in `debian/wclip.service`** or the service will
   fail to write to it.

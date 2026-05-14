@@ -105,7 +105,15 @@ Produces `../wclip_<version>_<arch>.deb`. The package installs:
 - `/etc/default/wclip` (conffile — your edits survive upgrades)
 - `/var/lib/wclip/` (data dir, owned by `wclip:wclip`)
 
-The service is enabled and started automatically on install.
+The service is **not** enabled or started on install. After install,
+opt in explicitly:
+
+    sudo systemctl enable --now wclip
+
+This lets you edit `/etc/default/wclip` (e.g. to set `BIND`,
+`HTTP_USER` / `HTTP_PASSWORD`) before the service first runs. Upgrades
+preserve whatever state you've set: an already-enabled-and-running
+service is restarted normally on upgrade.
 
 The package version is taken from the top entry of `debian/changelog`,
 which is also the single source of truth for the version baked into
