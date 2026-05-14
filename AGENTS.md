@@ -56,6 +56,7 @@ Env vars only. No CLI flags except `-v` / `--version` / `version`.
 |---|---|---|
 | `STORE` | `bolt` | `bolt` or `mem` (also accepts `memory`). |
 | `DB_PATH` | `wclip.db` | bolt only. |
+| `BIND` | unset | Listen address. Empty → all interfaces (`:PORT`). IPv6 literals must be bracketed (`[::1]`). Combined with `PORT` as `BIND:PORT`. |
 | `PORT` | `8093` | |
 | `DEBUG` | unset | Any value → gin debug mode. |
 | `HTTP_USER` / `HTTP_PASSWORD` | unset | Must be set together; setting only one is a fatal startup error. |

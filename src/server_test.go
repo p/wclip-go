@@ -208,5 +208,25 @@ func TestHandler_WithBoltStore(t *testing.T) {
   }
 }
 
+func TestListenAddr(t *testing.T) {
+  cases := []struct {
+    bind string
+    port int
+    want string
+  }{
+    {"", 8093, ":8093"},          // backward compat: all interfaces
+    {"127.0.0.1", 8093, "127.0.0.1:8093"},
+    {"0.0.0.0", 80, "0.0.0.0:80"},
+    {"[::1]", 8093, "[::1]:8093"}, // IPv6 literal, brackets supplied by user
+    {"localhost", 8093, "localhost:8093"},
+  }
+  for _, c := range cases {
+    got := listenAddr(c.bind, c.port)
+    if got != c.want {
+      t.Errorf("listenAddr(%q, %d) = %q, want %q", c.bind, c.port, got, c.want)
+    }
+  }
+}
+
 // silence unused import warnings if we change tests later
 var _ = ioutil.Discard

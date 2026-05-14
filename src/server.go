@@ -120,7 +120,18 @@ func main() {
       log.Fatal(err)
     }
   }
-  router.Run(fmt.Sprintf(":%d", iport))
+  bind := os.Getenv("BIND")
+  addr := listenAddr(bind, iport)
+  log.Printf("listening on %s", addr)
+  router.Run(addr)
+}
+
+// listenAddr builds the address string passed to gin/net.Listen.
+// An empty bind preserves the historical behavior of listening on all
+// interfaces (":<port>"). IPv6 literals must be bracketed by the caller,
+// e.g. BIND="[::1]".
+func listenAddr(bind string, port int) string {
+  return fmt.Sprintf("%s:%d", bind, port)
 }
 
 func newRouter(store Store, user, pass string) *gin.Engine {
